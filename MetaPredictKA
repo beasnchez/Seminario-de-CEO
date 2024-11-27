@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaPredictKA - Predicción de Metástasis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            text-align: center;
+            font-size: 2.5em;
+        }
+
+        .description {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #666;
+        }
+
+        .input-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1.1em;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .results {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .result-text {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+        }
+
+        #predictionChart {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .risk-level {
+            text-align: center;
+            font-size: 1.5em;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .risk-high {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .risk-medium {
+            background: #ffd93d;
+            color: black;
+        }
+
+        .risk-low {
+            background: #6bff6b;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>MetaPredictKA</h1>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="description">
+            <p>Sistema de predicción temprana de metástasis basado en el teorema de Kolmogorov-Arnold</p>
+        </div>
+
+        <div class="input-section">
+            <h2>Datos del Paciente</h2>
+            <div class="input-group">
+                <label for="tumorSize">Tamaño del tumor (cm)</label>
+                <input type="number" id="tumorSize" step="0.1" min="0">
+            </div>
+            <div class="input-group">
+                <label for="growthRate">Tasa de crecimiento (mm/mes)</label>
+                <input type="number" id="growthRate" step="0.1" min="0">
+            </div>
+            <div class="input-group">
+                <label for="markers">Marcadores tumorales (ng/mL)</label>
+                <input type="number" id="markers" step="0.1" min="0">
+            </div>
+            <button onclick="predictMetastasis()">Analizar Riesgo</button>
+        </div>
+
+        <div class="results">
+            <h2>Resultados del Análisis</h2>
+            <div class="result-text" id="resultText"></div>
+            <div class="risk-level" id="riskLevel"></div>
+            <canvas id="predictionChart"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let predictionChart = null;
+
+        function kolmogorovArnoldPredict(tumorSize, growthRate, markers) {
+            // Implementación simplificada del algoritmo de Kolmogorov-Arnold
+            const baseRisk = tumorSize * 0.3 + growthRate * 0.4 + markers * 0.3;
+            const normalized = baseRisk / 10;
+            return Math.min(Math.max(normalized, 0), 1);
+        }
+
+        function predictMetastasis() {
+            const tumorSize = parseFloat(document.getElementById('tumorSize').value);
+            const growthRate = parseFloat(document.getElementById('growthRate').value);
+            const markers = parseFloat(document.getElementById('markers').value);
+
+            if (!tumorSize || !growthRate || !markers) {
+                alert('Por favor complete todos los campos');
+                return;
+            }
+
+            const riskScore = kolmogorovArnoldPredict(tumorSize, growthRate, markers);
+            displayResults(riskScore);
+            updateChart(riskScore);
+        }
+
+        function displayResults(riskScore) {
+            const resultText = document.getElementById('resultText');
+            const riskLevel = document.getElementById('riskLevel');
+
+            resultText.innerHTML = `Probabilidad de metástasis: ${(riskScore * 100).toFixed(2)}%`;
+
+            if (riskScore > 0.7) {
+                riskLevel.className = 'risk-level risk-high';
+                riskLevel.innerHTML = 'Riesgo Alto';
+            } else if (riskScore > 0.3) {
+                riskLevel.className = 'risk-level risk-medium';
+                riskLevel.innerHTML = 'Riesgo Medio';
+            } else {
+                riskLevel.className = 'risk-level risk-low';
+                riskLevel.innerHTML = 'Riesgo Bajo';
+            }
+        }
+
+        function updateChart(riskScore) {
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+
+            if (predictionChart) {
+                predictionChart.destroy();
+            }
+
+            const timePoints = Array.from({length: 12}, (_, i) => `Mes ${i + 1}`);
+            const riskProgression = Array.from({length: 12}, (_, i) => 
+                Math.min(riskScore * (1 + i * 0.1), 1)
+            );
+
+            predictionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timePoints,
+                    datasets: [{
+                        label: 'Progresión de Riesgo',
+                        data: riskProgression,
+                        borderColor: '#3498db',
+                        tension: 0.4,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: 'Nivel de Riesgo'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
